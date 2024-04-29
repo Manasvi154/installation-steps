@@ -1,0 +1,334 @@
+Goto Root user
+sudo -i
+-----------------
+Set up repository
+sudo apt-get update
+sudo apt-get install \
+apt-transport-https \
+ca-certificates \
+curl \
+gnupg-agent \
+software-properties-common
+
+-------------------------
+Add Docker's Official GPG Key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository \
+"deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) \
+stable"
+---------------
+
+Install Docker Engine
+ sudo apt-get install docker-ce docker-ce-cli containerd.io
+----------------
+
+OR (to install docker engine)
+
+sudo -i
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+----
+
+Check Status of Docker
+systemctl status docker
+--------------------
+connect to docker
+docker images
+(Only root user can communicate)
+(need to add other user in docker group)
+sudo usermod -aG docker ubuntu
+id ubuntu (Check ubuntu user in docker group)
+----------------------------
+restart and check docker images command
+-----------------------------------------
+run sample images
+docker run hello-world
+---------------------
+docker ps
+docker ps -a (show dead container)
+
+
+
+practical 1 (install docker ec2 machine & perform lifecycle operations on any 3 images including nginx)
+------
+-install docker engine
+-3 images
+$ docker run hello-world
+$ docker run --name myimage -p 7089:80 -d nginx
+$ docker run --name mycentos -d centos 
+-lifecycle operations
+$ docker history nginx
+		 hello-world
+		 centos 
+$ docker top containerID
+$ docker stop containeriD
+$ 	 restart 
+$ docker stats containerID
+$ docker rm conatinerID
+$ docker pause containerID 
+$ 	 unpause
+$ docker kill conatinerID 
+
+
+
+practical 2 (Create Dockerfile, create your own image, configure your space in docker hub and push your own image into that workspace. Delete previously available image from your local machine and pull your own image from docker hub) 
+------
+-install docker engine
+-create Docker file
+$ sudo nano Dockerfile
+#This is a sample image
+FROM ubuntu
+MAINTAINER 20210801143@dypiu.ac.in
+RUN apt-get update -y
+RUN apt-get install nginx -y
+CMD ["echo","image created"]
+-build image
+$ docker build -t myimage:0.1 .
+$ docker login
+$ docker tag imageiD repositoryname
+$ docker push repositoryname
+$ docker image rm --force imageID
+$ docker pull repositoryname
+$ docker run imagename
+
+
+
+practical 3 (Pull jenkins image from docker hub expose data port and control port and align both ports on the docker engine)
+-----
+-install docker engine
+-pull jenkins image
+$ docker pull jenkins/jenkins:lts
+$ docker run -p 8080:8080 -p 50000:50000 jenkins/jenkins
+-copy password: 
+	ip address:8080 - paste password - install suggested plugins - skip and continue - save and finish - start using jenkins - get started - create job - name - freestyle project
+	ip address:50000
+
+
+
+practical 4 (Create private registry on localhost and push any image on that private registry)
+-----
+-install docker engine
+-fetch registry image
+$ docker pull registry
+$ docker run -d -p 5000:5000 --name registry registry:latest
+
+$ docker pull centos
+$ docker tag imageID localhost:5000/centos
+$ docker push localhost:5000/centos
+$ docker rmi --f imageid
+$ docker pull localhost:5000/centos
+
+
+
+practical 5 (Implementing aws ECS and Fargate deploying and managing containerized applications)
+------
+*ECS with ec2 instance
+-create cluster
+-task defination
+-deploy task
+-copy ssh client from instance and paste it on cmd
+* ECS with fargate
+-cluster
+-task defination
+-deploy
+copy public ip address, paste on browser
+
+
+
+practical 6 (Install docker compose package on docker then create and run multi-container applications using docker-compose)
+------
+-install docker engine
+-install compose cli plugin
+$ curl -SL https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
+-apply executible permission
+$ chmod +x /usr/local/bin/docker-compose
+$ docker compose version
+-create directory
+mkdir dockcompose
+cd dockcompose
+-app.py
+import time
+import redis
+from flask import Flask
+app = Flask(__name__)
+cache = redis.Redis(host='redis', port=6379)
+def get_hit_count():
+    retries = 5
+    while True:
+        try:
+            return cache.incr('hits')
+        except redis.exceptions.ConnectionError as exc:
+            if retries == 0:
+                raise exc
+            retries -= 1
+            time.sleep(0.5)
+@app.route('/')
+def hello():
+    count = get_hit_count()
+    return 'Hello World! I have been seen {} times.\n'.format(count)
+-requirements.txt
+flask
+redis
+-Dockerfile
+# syntax=docker/dockerfile:1
+FROM python:3.10-alpine
+WORKDIR /code
+ENV FLASK_APP=app.py
+ENV FLASK_RUN_HOST=0.0.0.0
+RUN apk add --no-cache gcc musl-dev linux-headers
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+EXPOSE 5000
+COPY . .
+CMD ["flask", "run"]
+-compose.yml
+services:
+  web:
+    build: .
+    ports:
+      - "8000:5000"
+  redis:
+    image: "redis:alpine"
+-start up your application
+$ docker compose up
+http://publicIP:8000/
+
+
+
+practical 7 (Build image with two dependencies (Flask,Reddis) and create 1 manager and 3 worker node containre with docker swarm)
+------
+-install docker engine
+$ docker info
+$ docker swarm init
+$ docker node ls
+$ docker service create alpine ping www.google.com
+$ docker service ls
+$ docker service ps serviceID
+$ docker container ls
+-scale up and rollback service
+$ docker service scale serviceID=5
+$ docker service ps serviceID
+$ docker service rollback serviceID
+
+-launch 3 more instances(worker nodes)
+-on manager node
+$ docker swarm join-token worker  
+-copy paste command on all worker nodes
+$ docker noden ls
+-create another service
+$ docker service create --replicas 5 alpine ping www.dypiu.ac.in
+$ docker service ls
+$ docker service ps serviceiD
+$ docker container ls
+-go to worker nodes and write 
+$ docker container ls
+
+
+
+practical 8 (Build image with two dependencies (flask,reddis) and create container with 5 replicas with docker stack)
+------
+-launch 3 instances(1M,3W)
+$ docker info
+-on manager node
+$ docker swarm init
+$ docker swarm join-token worker
+mkdir demostack
+cd demostack
+-app.py
+from flask import Flask
+from redis import Redis, RedisError
+import os
+import socket
+
+redis = Redis(host="redis", db=0, socket_connect_timeout=2, socket_timeout=2)
+
+app = Flask(__name__)
+
+@app.route("/")
+def hello():
+	try:
+	 visits = redis.incr("counter")
+	except RedisError:
+	 visits = "<i>cannot connect to Redis, counter disabled</i>"
+	
+	html = "<h3>Hello {name}!</h3>" \
+	       "<b>Hostname:</b> {hostname} <br/>" \
+	       "<b>Visits:</b> {visits}"
+	return html.format(name=os.getenv("NAME", "world"), hostname=socket.gethostname(), visits=visits)
+
+if __name__ == "__main__":
+	app.run(host='0.0.0.0', port=80)
+
+-docker-compose.yml
+version: "3"
+services:
+  # Service Name Defined as web
+  web:
+    # Pull the Image from Repository.
+    # replace username/repo:tag with your name and image details
+    #image: username/repo:tag 
+    image: manasvikp01/web_app:1.0
+    # Command used to deploy the Service
+    deploy:
+      # Run 5 instances of that image as a service called web
+      replicas: 5
+      resources:
+        # Limiting each one to use, at most, 10% of a single core of CPU time and 50MB of RAM.
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      # Immediately restart containers if one fails.     
+      restart_policy:
+        condition: on-failure
+    # Map port 4000 on the host to web’s port 80.    
+    ports:
+      - "4000:80"
+    # Define default network  
+    networks:
+      - webnet
+networks:
+  webnet:
+
+-Dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY . /app
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+EXPOSE 80
+ENV NAME World
+CMD ["python", "app.py"]
+
+-requirements.txt
+Flask
+Redis
+
+$ docker build -t web_app .
+$ docker tag web_app:latest manasvikp01/web_app:1.0
+$ docker login
+$ docker push manasvikp01/web_app:1.0
+
+$ docker stack deploy -c docker-compose.yml web_app
+$ docker service ls
+$ 	 	 ps serviceId
+$ 	 conatiner ls
+-copy paste publicIP:4000
+
+
+
+practical 9 (Implementing docker health checks for PostgresSQL databases in a containerized environment)
+------
+mkdir healthcheck
+cd healthcheck
+docker container run --name postgres1 -e POSTGRES_PASSWORD=mypassword -d postgres
+docker ps
+docker container exec -it postgres1 bash
+pg_isready -U postgres
+exit
+docker container run -d --name postgres2 -e POSTGRES_PASSWORD=mypassword --health-cmd="pg_isready -U postgres||exit1" postgres
+docker ps
+docker container run -d --name postgres3 -e POSTGRES_PASSWORD=mypassword --health-cmd="pg_isready -U root||exit1" postgres
+docker ps
+
+
