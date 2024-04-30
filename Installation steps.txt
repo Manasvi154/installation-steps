@@ -51,7 +51,15 @@ docker ps -a (show dead container)
 
 
 
-practical 1 (install docker ec2 machine & perform lifecycle operations on any 3 images including nginx)
+
+
+
+
+
+
+
+
+lifecycle
 ------
 -install docker engine
 -3 images
@@ -73,7 +81,7 @@ $ docker kill conatinerID
 
 
 
-practical 2 (Create Dockerfile, create your own image, configure your space in docker hub and push your own image into that workspace. Delete previously available image from your local machine and pull your own image from docker hub) 
+Dockerfile, own image
 ------
 -install docker engine
 -create Docker file
@@ -95,7 +103,7 @@ $ docker run imagename
 
 
 
-practical 3 (Pull jenkins image from docker hub expose data port and control port and align both ports on the docker engine)
+jenkins
 -----
 -install docker engine
 -pull jenkins image
@@ -107,7 +115,7 @@ $ docker run -p 8080:8080 -p 50000:50000 jenkins/jenkins
 
 
 
-practical 4 (Create private registry on localhost and push any image on that private registry)
+private registry
 -----
 -install docker engine
 -fetch registry image
@@ -122,7 +130,7 @@ $ docker pull localhost:5000/centos
 
 
 
-practical 5 (Implementing aws ECS and Fargate deploying and managing containerized applications)
+Ecs
 ------
 *ECS with ec2 instance
 -create cluster
@@ -137,7 +145,7 @@ copy public ip address, paste on browser
 
 
 
-practical 6 (Install docker compose package on docker then create and run multi-container applications using docker-compose)
+compose
 ------
 -install docker engine
 -install compose cli plugin
@@ -197,7 +205,7 @@ http://publicIP:8000/
 
 
 
-practical 7 (Build image with two dependencies (Flask,Reddis) and create 1 manager and 3 worker node containre with docker swarm)
+swarm
 ------
 -install docker engine
 $ docker info
@@ -227,7 +235,7 @@ $ docker container ls
 
 
 
-practical 8 (Build image with two dependencies (flask,reddis) and create container with 5 replicas with docker stack)
+stack
 ------
 -launch 3 instances(1M,3W)
 $ docker info
@@ -317,7 +325,7 @@ $ 	 conatiner ls
 
 
 
-practical 9 (Implementing docker health checks for PostgresSQL databases in a containerized environment)
+healthcheck
 ------
 mkdir healthcheck
 cd healthcheck
